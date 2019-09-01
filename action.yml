@@ -1,0 +1,65 @@
+name: Github Release create, update, and upload assets
+description: Github Action to create, update, or add files to Github Releases
+author: 'Damian Mee <spam@meedamian.com>'
+
+inputs:
+  # Exposed Github API inputs (identical to ones consumed by Github API):
+  #   https://developer.github.com/v3/repos/releases/#create-a-release
+  # NOTE: No defaults set for these, to avoid override on update due to the impossibility
+  #       of distinguishing between default, and user input.
+  token:
+    description: Github API token to be used.  Quite crucial, I'm afraid.
+    required: true
+
+  tag:
+    description: >
+      A tag for the release.  Required UNLESS action is run on tag push (meaning: `${GITHUB_REF}` contains `ref/tag/<TAG>`).
+    required: false
+
+  commitish:
+    description: Unnecessary, if the tag provided is a git tag.  If it isn't release will be made off `master`.
+    required: false
+
+  name:
+    description: Place to name the release, the more creative, the better.
+    required: false
+
+  body:
+    description: Place to put a longer description of the release, ex changelog, or info about contributors.
+    required: false
+
+  draft:
+    description: Set to true to create a release, but not publish it.
+    required: false
+
+  prerelease:
+    description: Marks this as a pre-release.
+    required: false
+
+  # This action specific inputs:
+  files:
+    description: >
+      A space-separated(!) list of files to be uploaded.  It's impossible to pass a list here, so make sure filenames
+      don't contain spaces in their names, or paths.  You can optionally specify a custom asset name by pre-pending it
+      to the name like this: `asset-name.tgz:./folder-to-be-uploaded/`.
+    required: false
+
+  gzip:
+    description: >
+      If set to `true` (default) compresses both files, and folders.  If set to `false`, uploads files exactly as they are, but
+      errors on folders.  If set to `folders`, uploads files as-they-are, but compresses folders.
+    required: false
+    default: true
+
+  allow_override:
+    description: Set to `true` to allow for release overriding.
+    required: false
+    default: false
+
+runs:
+  using: 'docker'
+  image: 'Dockerfile'
+
+branding:
+  color: 'green'
+  icon: 'github'

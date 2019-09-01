@@ -1,0 +1,38 @@
+name: Create shortened tags
+
+# Only triggered on git tag push
+on:
+  push:
+    tags:
+      - '*'
+
+jobs:
+  shorten:
+    name: Short tags
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v1
+
+      - name: Make sure that current tag is merged to master
+        run: |
+          cd "${GITHUB_WORKSPACE}"
+
+          git switch master
+
+          # Returns 1 if it's not, and therefore terminates the workflow
+          git merge-base --is-ancestor "${GITHUB_SHA}" HEAD
+
+      - name: Create, or update the short-name branch
+        run: |
+          cd "${GITHUB_WORKSPACE}"
+
+          git config user.name "${GITHUB_ACTOR}"
+          git config user.email "${GITHUB_ACTOR}@users.noreply.github.com"
+
+          TAG=$(echo "${GITHUB_REF}" | awk -F/ '{print $NF}')
+          SHORT=$(echo "${TAG}" | tr -d v | cut -d. -f-2)
+
+          git branch -f "${SHORT}" "${TAG}"
+
+          REMOTE="https://${GITHUB_ACTOR}:${{ secrets.GITHUB_TOKEN }}@github.com/${GITHUB_REPOSITORY}.git"
+          git push --force "${REMOTE}" "${SHORT}"
