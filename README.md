@@ -1,4 +1,17 @@
-# github-release
+# meeDamian/github-release
+
+[![branches_gh_action_svg]][branches_gh_action_url]
+[![gh_last_release_svg]][gh_last_release_url]
+[![tippin_svg]][tippin_url]
+
+[branches_gh_action_svg]: https://github.com/meeDamian/github-release/workflows/Create%20shortened%20tags/badge.svg
+[branches_gh_action_url]: https://github.com/meeDamian/github-release/blob/master/.github/workflows/on-tag.yml
+
+[gh_last_release_svg]: https://img.shields.io/github/v/release/meeDamian/github-release?sort=semver
+[gh_last_release_url]: https://github.com/meeDamian/github-release/releases/latest
+
+[tippin_svg]: https://img.shields.io/badge/donate-lightning-FDD023?logo=bitcoin&style=flat
+[tippin_url]: https://tippin.me/@meeDamian
 
 Github Action to create and update Github Releases, as well as upload assets to them.
 
@@ -100,14 +113,14 @@ steps:
 
 As of Aug 2019, Github Actions doesn't natively understand shortened tags in `uses:` directive.
 
-To go around that and not do what [`git-tag-manual` calls _"The insane thing"_][insane], I'm creating permanent git tags for each release in a semver format prefixed with `v`, **as well as** maintain branches with shortened tags.
+To go around that and not do what `git-tag-manual` calls _"[The insane thing]"_, I'm creating permanent git tags for each release in a semver format prefixed with `v`, **as well as** maintain branches with shortened tags.  You can see the exact process [here].
 
 Ex. `1.4` branch always points to the newest `v1.4.x` tag, etc.
 
 In practice:
 
 ```yaml
-# For exact tags
+# For exact version
 steps:
   uses: meeDamian/github-release@v1.0.1
 ```
@@ -120,7 +133,8 @@ steps:
 
 Note: It's likely branches will be deprecated once Github Actions fixes its limitation.
 
-[insane]: https://git-scm.com/docs/git-tag#_on_re_tagging
+[The insane thing]: https://git-scm.com/docs/git-tag#_on_re_tagging
+[here]: .github/workflows/on-tag.yml
 
 # License
 
