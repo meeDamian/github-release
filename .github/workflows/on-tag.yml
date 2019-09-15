@@ -32,6 +32,11 @@ jobs:
           TAG=$(echo "${GITHUB_REF}" | awk -F/ '{print $NF}')
           SHORT=$(echo "${TAG}" | tr -d v | cut -d. -f-2)
 
+          # Do nothing on test tags
+          if [[ "${SHORT}" = "0.0" ]]; then
+            exit 0
+          fi
+
           git branch -f "${SHORT}" "${TAG}"
 
           REMOTE="https://${GITHUB_ACTOR}:${{ secrets.GITHUB_TOKEN }}@github.com/${GITHUB_REPOSITORY}.git"
