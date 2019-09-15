@@ -1,0 +1,41 @@
+name: Test what works in an update
+
+on:
+  push:
+    branches:
+      - 'test-update'
+
+jobs:
+  shorten:
+    name: Short tags
+    runs-on: ubuntu-latest
+    steps:
+      - name: Create release
+        uses: meeDamian/github-release@master
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          tag: 'v0.0.0-test-update'
+          commitish: ${{ github.sha }}
+          name: A nmae with a tpyo
+          body: A description with a tpyo
+          prerelease: true
+
+      - name: Print Original Release
+        run: >
+          curl -s https://api.github.com/repos/meeDamian/github-release/releases/tags/v0.0.0-test-update
+          | jq '. | { id, tag_name, name, body, prerelease }'
+
+      - name: Update release
+        uses: meeDamian/github-release@master
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          tag: 'v0.0.0-test-update'
+          name: A name without typos
+          body: A description without a typos
+          prerelease: false
+          allow_override: true
+
+      - name: Print Updated Release
+        run: >
+          curl -s https://api.github.com/repos/meeDamian/github-release/releases/tags/v0.0.0-test-update
+          | jq '. | { id, tag_name, name, body, prerelease }'
