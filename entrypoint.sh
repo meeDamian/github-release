@@ -21,7 +21,7 @@ TAG="${INPUT_TAG}"
 
 # If `tag:` not provided, let's try using one available from github's context
 if [ -z "${TAG}" ]; then
-  TAG="$(echo "${GITHUB_REF}" | awk -F/ '{print $NF}')"
+  TAG="$(echo "${GITHUB_REF}" | grep 'refs/tags/' | awk -F/ '{print $NF}')"
 fi
 
 # If all ways of getting the tag failed, show error
