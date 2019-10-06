@@ -27,47 +27,55 @@ steps:
 
 - uses: meeDamian/github-release@1.0
   with:
-    token: ${{ secrets.GITHUB_TOKEN }}
+    token: ${{secrets.GITHUB_TOKEN}}
 ```
 
 `token` is the only **always required** parameter to be passed to this action.  Everything else can use sane defaults in some circumstances.  See [arguments] to learn more.
 
 [arguments]: #Arguments
 
+
 ### Arguments
 
-#### Action Inputs
+All inputs are available as a _normal_ Action input, but because Github Actions don't accept shell variables there, some are also available as an Environment Variable set beforehand.  When both set, one set as input takes precedence.
 
-| name             | required   | description 
-|:----------------:|:----------:|-------------
-| `token`          | **always** | Github Access token.  Can be accessed by using `${{ secrets.GITHUB_TOKEN }}` in the workflow file.
-| `tag`            | sometimes  | If triggered by git tag push, tag is picked up automatically.  Otherwise `tag:` has to be set. For tags constructed dynamically, see [Environment Variables] section.
-| `commitish`      | no         | Commit hash this release should point to.  Unnecessary, if `tag` is a git tag.  Otherwise, current `master` is used. [more]
-| `name`           | no         | Place to name the release, the more creative, the better. Defaults to the name of the tag used. [more]
-| `body`           | no         | Place to put a longer description of the release, ex changelog, or info about contributors.  Defaults to the commit message of the reference commit. [more]
-| `draft`          | no         | Set to `true` to create a release, but not publish it. `false` by default. [more]
-| `prerelease`    | no         | Marks this release as a pre-release. `false` by default. [more]
-| `files`          | no         | A **space-separated** list of files to be uploaded. When left empty, no files are uploaded. [More on files below]
-| `gzip`          | no         | Set whether to `gzip` uploaded assets, or not.  Available options are: `true`, `false`, and `folders` which uploads files unchanged, but compresses directories/folders.  Defaults to `true`.  Note: it errors if set to `false`, and `files:` argument contains path to a directory.
-| `allow_override` | no        | Allow override of release, if one with the same tag already exists.  Defaults to `false`
+| name             | ENV var alternative | required   | description
+|:----------------:|:-------------------:|:----------:|----------------
+| `token`          | -                   | **always** | Github Access token.  Can be accessed by using `${{secrets.GITHUB_TOKEN}}` in the workflow file.
+| `tag`            | `RELEASE_TAG`       | sometimes  | If triggered by git tag push, tag is picked up automatically.  Otherwise `tag:` has to be set. For tags constructed dynamically, use `RELEASE_TAG` env var.
+| `commitish`      | -                   | no         | Commit hash this release should point to.  Unnecessary, if `tag` is a git tag.  Otherwise, current `master` is used. [more]
+| `name`           | `RELEASE_NAME`      | no         | Place to name the release, the more creative, the better. Defaults to the name of the tag used. [more]
+| `body`           | -                   | no         | Place to put a longer description of the release, ex changelog, or info about contributors.  Defaults to the commit message of the reference commit. [more]
+| `draft`          | -                   | no         | Set to `true` to create a release, but not publish it. `false` by default. [more]
+| `prerelease`     | -                   | no         | Marks this release as a pre-release. `false` by default. [more]
+| `files`          | -                   | no         | A **space-separated** list of files to be uploaded. When left empty, no files are uploaded. [More on files below]
+| `gzip`           | -                   | no         | Set whether to `gzip` uploaded assets, or not.  Available options are: `true`, `false`, and `folders` which uploads files unchanged, but compresses directories/folders.  Defaults to `true`.  Note: it errors if set to `false`, and `files:` argument contains path to a directory.
+| `allow_override` | -                   | no        | Allow override of release, if one with the same tag already exists.  Defaults to `false`
 
-
-[Environment Variables]: #Environment-Variables
 [more]: https://developer.github.com/v3/repos/releases/#create-a-release
 [More on files below]: #Files-syntax
 
-#### Environment Variables
+#### Using ENV vars
 
-Github Actions inputs don't understand variables.  To go around it, some of the inputs provided by this action  fall back to reading from environment variables.
+In a step before this action, run ex:
 
-* `RELEASE_TAG` - Useful for dynamically created tag names
+```yml
+steps:
+    ...
+    - name: Set enviroment for github-release
+      run: |
+        echo ::set-env name=RELEASE_TAG::"v1.0.0"
+        echo ::set-env name=RELEASE_NAME::"${GITHUB_WORKFLOW}"
 
-> **Note:** to [make an environment variable] visible to steps afterwards, use:
->   ```sh
->   echo ::set-env name=RELEASE_TAG::"v1.0.0"
->   ```
+    - uses: meeDamian/github-release@1.0
+      with:
+        token: ${{secrets.GITHUB_TOKEN}}
+    ...
+```
 
-[make an environment variable]: https://help.github.com/en/articles/development-tools-for-github-actions#set-an-environment-variable-set-env
+To learn more about notation used above see [this].
+
+[this]: https://help.github.com/en/articles/development-tools-for-github-actions#set-an-environment-variable-set-env
 
 #### Files syntax
 

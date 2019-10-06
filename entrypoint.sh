@@ -75,6 +75,10 @@ if [ -n "${RELEASE_ID}" ] && [ "${INPUT_ALLOW_OVERRIDE}" != "true" ]; then
   exit 1
 fi
 
+# If no `name:` passed as input, but RELEASE_NAME env var is set, use it as the name
+if [ -z "${INPUT_NAME}" ] && [ -n "${RELEASE_NAME}" ]; then
+  INPUT_NAME="${RELEASE_NAME}"
+fi
 
 #
 ## Create, or update release on Github
