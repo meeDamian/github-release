@@ -131,8 +131,13 @@ RELEASE_ID="$(jq '.id' < "/tmp/${METHOD}.json")"
 #
 ## Handle, and prepare assets
 #
+# If no `files:` passed as input, but `RELEASE_FILES` env var is set, use it instead
+if [ -z "${INPUT_FILES}" ] && [ -n "${RELEASE_FILES}" ]; then
+  INPUT_FILES="${RELEASE_FILES}"
+fi
+
 if [ -z "${INPUT_FILES}" ]; then
-  >&2 echo "All done."
+  >&2 echo "No assets to upload. All done."
   exit 0
 fi
 

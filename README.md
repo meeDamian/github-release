@@ -48,7 +48,7 @@ All inputs are available as a _normal_ Action input, but because Github Actions 
 | `body`           | -                   | no         | Place to put a longer description of the release, ex changelog, or info about contributors.  Defaults to the commit message of the reference commit. [more]
 | `draft`          | -                   | no         | Set to `true` to create a release, but not publish it. `false` by default. [more]
 | `prerelease`     | -                   | no         | Marks this release as a pre-release. `false` by default. [more]
-| `files`          | -                   | no         | A **space-separated** list of files to be uploaded. When left empty, no files are uploaded. [More on files below]
+| `files`          | `RELEASE_FILES`     | no         | A **space-separated** list of files to be uploaded. When left empty, no files are uploaded. [More on files below]
 | `gzip`           | -                   | no         | Set whether to `gzip` uploaded assets, or not.  Available options are: `true`, `false`, and `folders` which uploads files unchanged, but compresses directories/folders.  Defaults to `true`.  Note: it errors if set to `false`, and `files:` argument contains path to a directory.
 | `allow_override` | -                   | no        | Allow override of release, if one with the same tag already exists.  Defaults to `false`
 
