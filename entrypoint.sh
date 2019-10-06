@@ -19,6 +19,15 @@ fi
 
 TAG="${INPUT_TAG}"
 
+# check if provided name exists in environment, if so, use it instead
+if [ ! -z "${TAG}" ]; then
+  if TAGFROMENVVAR=$(printenv ${TAG}); then
+    if [ ! -z "$TAGFROMENVVAR" ]; then
+      TAG="${TAGFROMENVVAR}"
+    fi
+  fi
+fi
+
 # If `tag:` not provided, let's try using one available from github's context
 if [ -z "${TAG}" ]; then
   TAG="$(echo "${GITHUB_REF}" | awk -F/ '{print $NF}')"
