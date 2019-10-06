@@ -92,11 +92,17 @@ if [ -n "${RELEASE_ID}" ]; then
   URL="${URL}/${RELEASE_ID}"
 fi
 
+# Set release name as Workflow name
+RELEASE_NAME="${INPUT_NAME}"
+if [ -z "${RELEASE_NAME}" ]; then
+  RELEASE_NAME="${GITHUB_WORKFLOW}"
+fi
+
 # Creating the object in a PATCH-friendly way
 CODE="$(jq -nc \
   --arg tag_name              "${TAG}" \
   --argjson target_commitish  "$(toJsonOrNull "${INPUT_COMMITISH}")"  \
-  --argjson name              "$(toJsonOrNull "${INPUT_NAME}")"       \
+  --argjson name              "$(toJsonOrNull "${RELEASE_NAME}")"       \
   --argjson body              "$(toJsonOrNull "${INPUT_BODY}")"       \
   --argjson draft             "$(toJsonOrNull "${INPUT_DRAFT}")"      \
   --argjson prerelease        "$(toJsonOrNull "${INPUT_PRERELEASE}")" \
