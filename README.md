@@ -36,10 +36,12 @@ steps:
 
 ### Arguments
 
+#### Action Inputs
+
 | name             | required   | description 
 |:----------------:|:----------:|-------------
 | `token`          | **always** | Github Access token.  Can be accessed by using `${{ secrets.GITHUB_TOKEN }}` in the workflow file.
-| `tag`            | sometimes  | If triggered by git tag push, tag is picked up automatically.  Otherwise `tag:` has to be set.
+| `tag`            | sometimes  | If triggered by git tag push, tag is picked up automatically.  Otherwise `tag:` has to be set. For tags constructed dynamically, see [Environment Variables] section.
 | `commitish`      | no         | Commit hash this release should point to.  Unnecessary, if `tag` is a git tag.  Otherwise, current `master` is used. [more]
 | `name`           | no         | Place to name the release, the more creative, the better. Defaults to the name of the tag used. [more]
 | `body`           | no         | Place to put a longer description of the release, ex changelog, or info about contributors.  Defaults to the commit message of the reference commit. [more]
@@ -50,8 +52,22 @@ steps:
 | `allow_override` | no        | Allow override of release, if one with the same tag already exists.  Defaults to `false`
 
 
+[Environment Variables]: #Environment-Variables
 [more]: https://developer.github.com/v3/repos/releases/#create-a-release
 [More on files below]: #Files-syntax
+
+#### Environment Variables
+
+Github Actions inputs don't understand variables.  To go around it, some of the inputs provided by this action  fall back to reading from environment variables.
+
+* `RELEASE_TAG` - Useful for dynamically created tag names
+
+> **Note:** to [make an environment variable] visible to steps afterwards, use:
+>   ```sh
+>   echo ::set-env name=RELEASE_TAG::"v1.0.0"
+>   ```
+
+[make an environment variable]: https://help.github.com/en/articles/development-tools-for-github-actions#set-an-environment-variable-set-env
 
 #### Files syntax
 

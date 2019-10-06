@@ -17,22 +17,31 @@ if [ -z "${TOKEN}" ]; then
   exit 1
 fi
 
+# Try getting $TAG from action input
 TAG="${INPUT_TAG}"
 
-# If `tag:` not provided, let's try using one available from github's context
+# [fallback] Try getting $TAG from ENVironment VARiable
+#   NOTE: Can be set in a step before using ex:
+#     echo ::set-env name=RELEASE_TAG::"v1.0.0"
+if [ -z "${TAG}" ]; then
+  TAG="${RELEASE_TAG}"
+fi
+
+# [fallback] Try getting $TAG from Github context (only works on git-tag push action)
 if [ -z "${TAG}" ]; then
   TAG="$(echo "${GITHUB_REF}" | grep 'refs/tags/' | awk -F/ '{print $NF}')"
 fi
 
-# If all ways of getting the tag failed, show error
+# If all ways of getting the TAG failed, exit with an error
 if [ -z "${TAG}" ]; then
   >&2 printf "\nERR: Invalid input: 'tag' is required, and must be specified.\n"
-  >&2 printf "\tNote: It's used as a reference to the release.\n\n"
   >&2 printf "Try:\n"
   >&2 printf "\tuses: meeDamian/github-release@TAG\n"
   >&2 printf "\twith:\n"
   >&2 printf "\t  tag: v0.0.1\n"
-  >&2 printf "\t  ...\n"
+  >&2 printf "\t  ...\n\n"
+  >&2 printf "Note: To use dynamic TAG, set RELEASE_TAG env var in a prior step, ex:\n"
+  >&2 printf '\techo ::set-env name=RELEASE_TAG::"v1.0.0"\n\n'
   exit 1
 fi
 
