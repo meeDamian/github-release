@@ -83,7 +83,7 @@ fi
 #
 ## Create, or update release on Github
 #
-# For a given string return either `null` (if empty), or `"quoted string"` (if not)
+# For a given string return either `null` (if empty), or `'single quoted string'` (if not)
 toJsonOrNull() {
   if [ -z "$1" ]; then
     echo null
@@ -95,7 +95,7 @@ toJsonOrNull() {
     return
   fi
 
-  echo "\"$1\""
+  echo "\'$1\'"
 }
 
 METHOD="POST"
