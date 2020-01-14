@@ -15,6 +15,11 @@
 
 Github Action to create and update Github Releases, as well as upload assets to them.
 
+> ### **NOTICE:** This action is now deprecated, and official actions should be used instead:
+>
+> * https://github.com/actions/create-release
+> * https://github.com/actions/upload-release-asset
+
 # Usage
 
 See [action.yml](action.yml)
