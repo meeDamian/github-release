@@ -115,7 +115,7 @@ status_code="$(jq -nc \
   --argjson target_commitish  "$(toJsonOrNull "$INPUT_COMMITISH")"  \
   --argjson name              "$(toJsonOrNull "$INPUT_NAME")"       \
   --argjson prerelease        "$(toJsonOrNull "$INPUT_PRERELEASE")" \
-  --argjson body              "$(toJsonOrNull "$(echo "$INPUT_BODY" | sed -z 's/\n/\\n/g')")" \
+  --argjson body              "$(toJsonOrNull "$(echo "$INPUT_BODY" | sed ':a;N;$!ba;s/\n/\\n/g')")" \
   '{$tag_name, $target_commitish, $name, $body, $draft, $prerelease} | del(.[] | nulls)' | \
   curl -s -X "$method" -d @- \
   --write-out "%{http_code}" -o "/tmp/$method.json" \
