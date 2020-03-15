@@ -111,11 +111,11 @@ fi
 # Creating the object in a PATCH-friendly way
 status_code="$(jq -nc \
   --arg tag_name              "$tag" \
+  --argjson draft             "$(toJsonOrNull "$draft")" \
   --argjson target_commitish  "$(toJsonOrNull "$INPUT_COMMITISH")"  \
   --argjson name              "$(toJsonOrNull "$INPUT_NAME")"       \
-  --argjson body              "$(toJsonOrNull "$INPUT_BODY")"       \
-  --argjson draft             "$(toJsonOrNull "$draft")"      \
   --argjson prerelease        "$(toJsonOrNull "$INPUT_PRERELEASE")" \
+  --argjson body              "$(toJsonOrNull "$(echo "$INPUT_BODY" | sed -z 's/\n/\\n/g')")" \
   '{$tag_name, $target_commitish, $name, $body, $draft, $prerelease} | del(.[] | nulls)' | \
   curl -s -X "$method" -d @- \
   --write-out "%{http_code}" -o "/tmp/$method.json" \
