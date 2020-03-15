@@ -1,8 +1,7 @@
-FROM alpine:3.10
+FROM alpine:3.11
 
-RUN apk update \
-    && apk add file curl jq
+RUN apk add --no-cache file curl jq
 
 COPY entrypoint.sh /
 
-ENTRYPOINT ["/entrypoint.sh"]
+ENTRYPOINT [ "/entrypoint.sh" ]

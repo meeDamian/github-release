@@ -15,24 +15,29 @@
 
 Github Action to create and update Github Releases, as well as upload assets to them.
 
-> ### **NOTICE:** This action is now deprecated, and official actions should be used instead:
+
+> ### **NOTICE_2:** Deprecation <small>temporarily</small> cancelled, because GH actions are just awful.
 >
-> * https://github.com/actions/create-release
-> * https://github.com/actions/upload-release-asset
+> ### ~~**NOTICE:** This action is now deprecated, and official actions should be used instead:~~
+>
+> * ~~https://github.com/actions/create-release~~
+> * ~~https://github.com/actions/upload-release-asset~~
+
 
 # Usage
 
 See [action.yml](action.yml)
 
+
 ### Minimal
 
 ```yaml
 steps:
-- uses: actions/checkout@v1
+- uses: actions/checkout@v2
 
-- uses: meeDamian/github-release@1.0
+- uses: meeDamian/github-release@2.0
   with:
-    token: ${{secrets.GITHUB_TOKEN}}
+    token: ${{ secrets.GITHUB_TOKEN }}
 ```
 
 `token` is the only **always required** parameter to be passed to this action.  Everything else can use sane defaults in some circumstances.  See [arguments] to learn more.
@@ -44,21 +49,22 @@ steps:
 
 All inputs are available as a _normal_ Action input, but because Github Actions don't accept shell variables there, some are also available as an Environment Variable set beforehand.  When both set, one set as input takes precedence.
 
-| name             | ENV var alternative | required   | description
-|:----------------:|:-------------------:|:----------:|----------------
-| `token`          | -                   | **always** | Github Access token.  Can be accessed by using `${{secrets.GITHUB_TOKEN}}` in the workflow file.
-| `tag`            | `RELEASE_TAG`       | sometimes  | If triggered by git tag push, tag is picked up automatically.  Otherwise `tag:` has to be set. For tags constructed dynamically, use `RELEASE_TAG` env var.
-| `commitish`      | -                   | no         | Commit hash this release should point to.  Unnecessary, if `tag` is a git tag.  Otherwise, current `master` is used. [more]
-| `name`           | `RELEASE_NAME`      | no         | Place to name the release, the more creative, the better. Defaults to the name of the tag used. [more]
-| `body`           | -                   | no         | Place to put a longer description of the release, ex changelog, or info about contributors.  Defaults to the commit message of the reference commit. [more]
-| `draft`          | -                   | no         | Set to `true` to create a release, but not publish it. `false` by default. [more]
-| `prerelease`     | -                   | no         | Marks this release as a pre-release. `false` by default. [more]
-| `files`          | `RELEASE_FILES`     | no         | A **space-separated** list of files to be uploaded. When left empty, no files are uploaded. [More on files below]
-| `gzip`           | -                   | no         | Set whether to `gzip` uploaded assets, or not.  Available options are: `true`, `false`, and `folders` which uploads files unchanged, but compresses directories/folders.  Defaults to `true`.  Note: it errors if set to `false`, and `files:` argument contains path to a directory.
-| `allow_override` | -                   | no        | Allow override of release, if one with the same tag already exists.  Defaults to `false`
+| name             | required   | description
+|:----------------:|:----------:|----------------
+| `token`          | **always** | Github Access token.  Can be accessed by using `${{ secrets.GITHUB_TOKEN }}` in the workflow file.
+| `tag`            | sometimes  | If triggered by git tag push, tag is picked up automatically.  Otherwise `tag:` has to be set.
+| `commitish`      | no         | Commit hash this release should point to.  Unnecessary, if `tag` is a git tag.  Otherwise, current `master` is used. [more]
+| `name`           | no         | Name the release, the more creative, the better. Defaults to the name of the tag used. [more]
+| `body`           | no         | Longer description of the release, ex changelog, or info about contributors.  Defaults to the commit message of the reference commit. [more]
+| `draft`          | no         | Set to `true` to create a release, but not publish it. `false` by default. [more]
+| `prerelease`     | no         | Mark this release as a pre-release. `false` by default. [more]
+| `files`          | no         | A **space-separated** list of files to be uploaded. When left empty, no files are uploaded. [More on files below]
+| `gzip`           | no         | Set whether to `gzip` uploaded assets, or not.  Available options are: `true`, `false`, and `folders` which uploads files unchanged, but compresses directories/folders.  Defaults to `true`.  Note: it errors if set to `false`, and `files:` argument contains path to a directory.
+| `allow_override` | no         | Allow override of release, if one with the same tag already exists.  Defaults to `false`
 
 [more]: https://developer.github.com/v3/repos/releases/#create-a-release
 [More on files below]: #Files-syntax
+
 
 #### Using ENV vars
 
@@ -70,11 +76,13 @@ steps:
     - name: Set enviroment for github-release
       run: |
         echo ::set-env name=RELEASE_TAG::"v1.0.0"
-        echo ::set-env name=RELEASE_NAME::"${GITHUB_WORKFLOW}"
+        echo ::set-env name=RELEASE_NAME::"$GITHUB_WORKFLOW"
 
-    - uses: meeDamian/github-release@1.0
+    - uses: meeDamian/github-release@2.0
       with:
-        token: ${{secrets.GITHUB_TOKEN}}
+        token: ${{ secrets.GITHUB_TOKEN }}
+        tag: ${{ env.RELEASE_TAG }}
+        name: ${{ env.RELEASE_NAME }}
     ...
 ```
 
@@ -82,9 +90,10 @@ To learn more about notation used above see [this].
 
 [this]: https://help.github.com/en/articles/development-tools-for-github-actions#set-an-environment-variable-set-env
 
+
 #### Files syntax
 
-In it's simplest form it takes a single file/folder to be compressed & uploaded:
+In its simplest form it takes a single file/folder to be compressed & uploaded:
 
 ```yaml
 with:
@@ -113,16 +122,17 @@ with:
 ```
 [YAML multiline syntax]: https://yaml-multiline.info/ 
 
+
 ### Advanced example
 
 ```yaml
 steps:
 - uses: actions/checkout@master
 
-- uses: meeDamian/github-release@0.1
+- uses: meeDamian/github-release@2.0
   with:
     token: ${{ secrets.GITHUB_TOKEN }}
-    tag: v1.3.6
+    tag: ${{ env.MY_CUSTOM_TAG }}
     name: My Creative Name
     body: >
       This release actually changes the fabric of the reality, so be careful 
@@ -151,19 +161,22 @@ In practice:
 ```yaml
 # For exact version
 steps:
-  uses: meeDamian/github-release@v1.0.1
+  uses: meeDamian/github-release@v2.0.0
 ```
+
 Or
+
 ```yaml
-# For newest minor version 1.0
+# For newest minor version 2.0
 steps:
-  uses: meeDamian/github-release@1.0
+  uses: meeDamian/github-release@2.0
 ```
 
 Note: It's likely branches will be deprecated once Github Actions fixes its limitation.
 
 [The insane thing]: https://git-scm.com/docs/git-tag#_on_re_tagging
 [here]: .github/workflows/on-tag.yml
+
 
 # License
 
