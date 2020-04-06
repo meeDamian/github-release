@@ -11,8 +11,9 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - uses: actions/checkout@v2
+
       - name: Set environment
-        uses: actions/checkout@v2
         run: |
           cd "$GITHUB_WORKSPACE"
 
