@@ -11,19 +11,11 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v2
-
-      - name: Make sure that current tag is merged to master
+      - name: Set environment
+        uses: actions/checkout@v2
         run: |
           cd "$GITHUB_WORKSPACE"
 
-          git switch master
-
-          # Returns 1 if it's not, and therefore terminates the workflow
-          git merge-base --is-ancestor "$GITHUB_SHA" HEAD
-
-      - name: Set environment
-        run: |
           git config user.name "$GITHUB_ACTOR"
           git config user.email "$GITHUB_ACTOR@users.noreply.github.com"
 
