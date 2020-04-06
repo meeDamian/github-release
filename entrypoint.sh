@@ -9,7 +9,6 @@ PKG="meeDamian/github-release@2.0"
 #
 TOKEN="$INPUT_TOKEN"
 if [ -z "$TOKEN" ]; then
-  echo "::error::Token missing"
   >&2 printf "\nERR: Invalid input: 'token' is required, and must be specified.\n"
   >&2 printf "\tNote: It's necessary to interact with Github's API.\n\n"
   >&2 printf "Try:\n"
@@ -17,6 +16,7 @@ if [ -z "$TOKEN" ]; then
   >&2 printf "\twith:\n"
   >&2 printf "\t  token: \${{ secrets.GITHUB_TOKEN }}\n"
   >&2 printf "\t  ...\n"
+  echo "::error::missing: token (see log for details)"
   exit 1
 fi
 
@@ -40,6 +40,7 @@ if [ -z "$tag" ]; then
   >&2 printf '\twith:\n'
   >&2 printf "\t  tag: \${{ env.TAG }}\n"
   >&2 printf "\t  ...\n\n"
+  echo "::error::missing: tag (see log for details)"
   exit 1
 fi
 
@@ -52,6 +53,7 @@ if [ "$INPUT_GZIP" != "true" ] && [ "$INPUT_GZIP" != "false" ] && [ "$INPUT_GZIP
   >&2 printf "\twith:\n"
   >&2 printf "\t  gzip: true\n"
   >&2 printf "\t  ...\n"
+  echo "::error::invalid: gzip (see log for details)"
   exit 1
 fi
 
@@ -77,6 +79,7 @@ if [ -n "$release_id" ] && [ "$INPUT_ALLOW_OVERRIDE" != "true" ]; then
   >&2 printf "\twith:\n"
   >&2 printf "\t  ...\n"
   >&2 printf "\t  allow_override: true\n"
+  echo "::error::missing: allow_override (see log for details)"
   exit 1
 fi
 
@@ -132,6 +135,7 @@ status_code="$(jq -nc \
 if [ "$status_code" != "200" ] && [ "$status_code" != "201" ]; then
   >&2 printf "\n\tERR: %s to Github release has failed\n" "$method"
   >&2 jq . < "$TMP/$method.json"
+  echo "::error::failed to create release (see log for details)"
   exit 1
 fi
 
@@ -145,6 +149,7 @@ echo "::set-output name=release_id::$release_id"
 #
 ## Handle, and prepare assets
 #
+echo "::group::Upload Assets"
 if [ -z "$INPUT_FILES" ]; then
   >&2 echo "No assets to upload. All done."
   exit 0
@@ -186,6 +191,7 @@ for entry in $INPUT_FILES; do
         >&2 printf "\t  files: >\n"
         >&2 printf "\t    README.md\n"
         >&2 printf "\t    my-artifacts/\n"
+        echo "::error::invalid: gzip and files combination (see log for details)"
         exit 1
     fi
 
@@ -243,9 +249,12 @@ for asset in "$assets"/*; do
   if [ "$status_code" -ne "201" ]; then
     >&2 printf "\n\tERR: Failed asset upload: %s\n" "$file_name"
     >&2 jq . < "$TMP/$file_name.json"
+    echo "::error::failed to upload asset: $file_name (see log for details)"
     exit 1
   fi
 done
+
+echo "::endgroup::"
 
 if [ -n "$INPUT_DRAFT" ]; then
   >&2 echo "Draft status already correct. All done."
@@ -264,6 +273,7 @@ status_code="$(curl -sS  -X PATCH  -d '{"draft": false}' \
 if [ "$status_code" != "200" ]; then
   >&2 printf "\n\tERR: Final publishing of the ready Github Release has failed\n"
   >&2 jq . < "$TMP/publish.json"
+  echo "::error::failed to complete release (see log for details)"
   exit 1
 fi
 
