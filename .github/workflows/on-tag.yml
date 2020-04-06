@@ -28,8 +28,8 @@ jobs:
           git config user.email "$GITHUB_ACTOR@users.noreply.github.com"
 
           TAG="$(echo "$GITHUB_REF" | awk -F/ '{print $NF}')"
-          echo ::set-env name=TAG::"$TAG"
-          echo ::set-env name=SHORT::"$(echo "${TAG#v}" | cut -d. -f-2)"
+          echo "::set-env name=TAG::$TAG"
+          echo "::set-env name=SHORT::$(echo "${TAG#v}" | cut -d. -f-2)"
 
       - name: Create, or update the short-name branch
         if: env.SHORT != '0.0'
