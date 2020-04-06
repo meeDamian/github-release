@@ -4,6 +4,8 @@ set -e
 
 PKG="meeDamian/github-release@2.0"
 
+echo "::group::Process inputs"
+
 #
 ## Input verification
 #
@@ -83,6 +85,9 @@ if [ -n "$release_id" ] && [ "$INPUT_ALLOW_OVERRIDE" != "true" ]; then
   exit 1
 fi
 
+echo "::endgroup::"
+echo "::group::Create Release"
+
 TMP="$(mktemp -d)"
 
 #
@@ -144,7 +149,7 @@ release_id="$(jq '.id' < "$TMP/$method.json")"
 
 # Make release ID available to other steps in user's workflow
 echo "::set-output name=release_id::$release_id"
-
+echo "::endgroup::"
 
 #
 ## Handle, and prepare assets
@@ -255,12 +260,12 @@ for asset in "$assets"/*; do
 done
 
 echo "::endgroup::"
+echo "::group::Complete Release"
 
 if [ -n "$INPUT_DRAFT" ]; then
   >&2 echo "Draft status already correct. All done."
   exit 0
 fi
-
 
 # Publish Release
 #   docs ref: https://developer.github.com/v3/repos/releases/#edit-a-release
@@ -278,3 +283,5 @@ if [ "$status_code" != "200" ]; then
 fi
 
 >&2 echo "All done."
+
+echo "::endgroup::"
