@@ -9,14 +9,14 @@ PKG="meeDamian/github-release@2.0"
 #
 TOKEN="$INPUT_TOKEN"
 if [ -z "$TOKEN" ]; then
+  >&2 echo "::error::missing: token (see log for details)"
   >&2 printf "\nERR: Invalid input: 'token' is required, and must be specified.\n"
   >&2 printf "\tNote: It's necessary to interact with Github's API.\n\n"
   >&2 printf "Try:\n"
   >&2 printf "\tuses: %s\n" "$PKG"
   >&2 printf "\twith:\n"
   >&2 printf "\t  token: \${{ secrets.GITHUB_TOKEN }}\n"
-  >&2 printf "\t  ...\n"
-  >&2 echo "::error::missing: token (see log for details)"
+  >&2 printf "\t  ...\n\n"
   exit 1
 fi
 
@@ -30,6 +30,7 @@ fi
 
 # If all ways of getting the $tag failed, exit with an error
 if [ -z "$tag" ]; then
+  >&2 echo "::error::missing: tag (see log for details)"
   >&2 printf "\nERR: Invalid input: 'tag' is required, and must be specified.\n"
   >&2 printf "Try:\n"
   >&2 printf "\tuses: %s\n" "$PKG"
@@ -40,20 +41,19 @@ if [ -z "$tag" ]; then
   >&2 printf '\twith:\n'
   >&2 printf "\t  tag: \${{ env.TAG }}\n"
   >&2 printf "\t  ...\n\n"
-  echo "::error::missing: tag (see log for details)"
   exit 1
 fi
 
 # Verify that gzip: option is set to any of the allowed values
 if [ "$INPUT_GZIP" != "true" ] && [ "$INPUT_GZIP" != "false" ] && [ "$INPUT_GZIP" != "folders" ]; then
+  >&2 echo "::error::invalid: gzip (see log for details)"
   >&2 printf "\nERR: Invalid input: 'gzip' can only be not set, or one of: true, false, folders\n"
   >&2 printf "\tNote: It defines what to do with assets before uploading them.\n\n"
   >&2 printf "Try:\n"
   >&2 printf "\tuses: %s\n" "$PKG"
   >&2 printf "\twith:\n"
   >&2 printf "\t  gzip: true\n"
-  >&2 printf "\t  ...\n"
-  echo "::error::invalid: gzip (see log for details)"
+  >&2 printf "\t  ...\n\n"
   exit 1
 fi
 
@@ -72,14 +72,14 @@ gh_release_api() {
 release_id="$(gh_release_api "tags/$tag" | jq -r '.id | select(. != null)')"
 
 if [ -n "$release_id" ] && [ "$INPUT_ALLOW_OVERRIDE" != "true" ]; then
+  >&2 echo "::error::missing: allow_override (see log for details)"
   >&2 printf "\nERR: Release for tag='%s' already exists, and overriding is not allowed.\n" "$tag"
   >&2 printf "\tNote: Either use different 'tag:' name, or set 'allow_override:'\n\n"
   >&2 printf "Try:\n"
   >&2 printf "\tuses: %s\n" "$PKG"
   >&2 printf "\twith:\n"
   >&2 printf "\t  ...\n"
-  >&2 printf "\t  allow_override: true\n"
-  echo "::error::missing: allow_override (see log for details)"
+  >&2 printf "\t  allow_override: true\n\n"
   exit 1
 fi
 
@@ -133,9 +133,9 @@ status_code="$(jq -nc \
   "$full_url")"
 
 if [ "$status_code" != "200" ] && [ "$status_code" != "201" ]; then
+  >&2 echo "::error::failed to create release (see log for details)"
   >&2 printf "\n\tERR: %s to Github release has failed\n" "$method"
   >&2 jq . < "$TMP/$method.json"
-  echo "::error::failed to create release (see log for details)"
   exit 1
 fi
 
@@ -181,6 +181,7 @@ for entry in $INPUT_FILES; do
   for file in $asset_path; do
     # Error out on the only illegal combination:  compression disabled AND folder provided
     if [ "$INPUT_GZIP" = "false" ] && [ -d "$file" ]; then
+        >&2 echo "::error::invalid: gzip and files combination (see log for details)"
         >&2 printf "\nERR: Invalid configuration: 'gzip' cannot be set to 'false' while there are 'folders/' provided.\n"
         >&2 printf "\tNote: Either set 'gzip: folders', or remove directories from the 'files:' list.\n\n"
         >&2 printf "Try:\n"
@@ -191,7 +192,6 @@ for entry in $INPUT_FILES; do
         >&2 printf "\t  files: >\n"
         >&2 printf "\t    README.md\n"
         >&2 printf "\t    my-artifacts/\n"
-        echo "::error::invalid: gzip and files combination (see log for details)"
         exit 1
     fi
 
@@ -247,9 +247,9 @@ for asset in "$assets"/*; do
     "$upload_url/$release_id/assets?name=$file_name")"
 
   if [ "$status_code" -ne "201" ]; then
+    >&2 echo "::error::failed to upload asset: $file_name (see log for details)"
     >&2 printf "\n\tERR: Failed asset upload: %s\n" "$file_name"
     >&2 jq . < "$TMP/$file_name.json"
-    echo "::error::failed to upload asset: $file_name (see log for details)"
     exit 1
   fi
 done
@@ -271,9 +271,9 @@ status_code="$(curl -sS  -X PATCH  -d '{"draft": false}' \
   "$releases_url/$release_id")"
 
 if [ "$status_code" != "200" ]; then
+  >&2 echo "::error::failed to complete release (see log for details)"
   >&2 printf "\n\tERR: Final publishing of the ready Github Release has failed\n"
   >&2 jq . < "$TMP/publish.json"
-  echo "::error::failed to complete release (see log for details)"
   exit 1
 fi
 
