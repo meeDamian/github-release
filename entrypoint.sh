@@ -4,8 +4,6 @@ set -e
 
 PKG="meeDamian/github-release@2.0"
 
-echo "::group::Process inputs"
-
 #
 ## Input verification
 #
@@ -85,7 +83,6 @@ if [ -n "$release_id" ] && [ "$INPUT_ALLOW_OVERRIDE" != "true" ]; then
   exit 1
 fi
 
-echo "::endgroup::"
 echo "::group::Create Release"
 
 TMP="$(mktemp -d)"
@@ -154,12 +151,13 @@ echo "::endgroup::"
 #
 ## Handle, and prepare assets
 #
-echo "::group::Upload Assets"
+
 if [ -z "$INPUT_FILES" ]; then
   >&2 echo "No assets to upload. All done."
   exit 0
 fi
 
+echo "::group::Upload Assets"
 
 assets="$HOME/assets"
 mkdir -p "$assets/"
@@ -260,12 +258,13 @@ for asset in "$assets"/*; do
 done
 
 echo "::endgroup::"
-echo "::group::Complete Release"
 
 if [ -n "$INPUT_DRAFT" ]; then
   >&2 echo "Draft status already correct. All done."
   exit 0
 fi
+
+echo "::group::Complete Release"
 
 # Publish Release
 #   docs ref: https://developer.github.com/v3/repos/releases/#edit-a-release
@@ -282,6 +281,6 @@ if [ "$status_code" != "200" ]; then
   exit 1
 fi
 
->&2 echo "All done."
-
 echo "::endgroup::"
+
+>&2 echo "All done."
