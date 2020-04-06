@@ -16,7 +16,7 @@ if [ -z "$TOKEN" ]; then
   >&2 printf "\twith:\n"
   >&2 printf "\t  token: \${{ secrets.GITHUB_TOKEN }}\n"
   >&2 printf "\t  ...\n"
-  echo "::error::missing: token (see log for details)"
+  >&2 echo "::error::missing: token (see log for details)"
   exit 1
 fi
 
