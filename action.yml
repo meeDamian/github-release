@@ -6,18 +6,18 @@ inputs:
   # Exposed Github API inputs (identical to ones consumed by Github API):
   #   https://developer.github.com/v3/repos/releases/#create-a-release
   # NOTE: No defaults set for these, to avoid override on update due to the impossibility
-  #       of distinguishing between default, and user input.
+  #       of distinguishing between default and user input.
   token:
-    description: Github API token to be used.  Quite crucial, I'm afraid.
+    description: Github API token to be used. Quite unavoidable, I'm afraid.
     required: true
 
   tag:
     description: >
-      A tag for the release.  Required UNLESS action is run on tag push (meaning: `$GITHUB_REF` contains `ref/tag/<TAG>`).
+      A tag for the release. Required UNLESS action is run on tag push (meaning: '$GITHUB_REF' contains 'ref/tag/<TAG>').
     required: false
 
   commitish:
-    description: Unnecessary, if the tag provided is a git tag.  If it isn't, release will be made off `master`.
+    description: Unnecessary, if the tag provided is a git tag. If it isn't, release will be created off 'master'.
     required: false
 
   name:
@@ -25,44 +25,43 @@ inputs:
     required: false
 
   body:
-    description: Longer description of the release, ex changelog, or info about contributors.
+    description: Longer description of the release, ex. changelog, or info about contributors.
     required: false
 
   draft:
     description: >
-      Whether to keep the Release as draft, and not publish it.  Defaults to 'false', unless files are specified, when
-      a draft Release is created first, and published only if all asset uploads succeed. Prevent by explicitly setting
-      it to 'false'.
+      Keep the Release as draft and don't publish it. With no 'files', the default is 'false'. With 'files' default is
+      to 'un-draft' the release only after and if all assets upload successfully. Keep it private with explicit 'false'.
     required: false
 
   prerelease:
-    description: Marks this as a pre-release.
+    description: Marks Release as a pre-Release.
     required: false
 
   # Inputs specific to this-action:
   files:
     description: >
-      A space-separated(!) list of files to be uploaded.  It's impossible to pass a list here, so make sure filenames
-      don't contain spaces in their names, or paths.  You can optionally specify a custom asset name by pre-pending it
-      to the name like this: `asset-name.tgz:./folder-to-be-uploaded/`.
+      A whitespace-separated(!) list of files to be uploaded. It's impossible to pass a list here, so make sure
+      filenames don't contain spaces nor colons in their names/paths.  Optionally custom asset name can be specified
+      by pre-pending it to the name, ex: 'asset-name.tgz:./folder-to-be-uploaded/'.
     required: false
 
   gzip:
     description: >
-      If set to `true` (default) compresses both files, and folders.  If set to `false`, uploads files exactly as they are, but
-      errors on folders.  If set to `folders`, uploads files as-they-are, but compresses folders.
+      Default is 'true', which compresses both files, and folders. 'false' compresses nothing, but will error out on
+      folders, as they can't be uploaded. 'folders' applies compression to folders only.
     required: false
     default: true
 
   allow_override:
-    description: Set to `true` to allow for release overriding.
+    description: Set to 'true' to allow for release overriding.
     required: false
     default: false
 
 runs:
-  using: 'docker'
-  image: 'Dockerfile'
+  using: docker
+  image: Dockerfile
 
 branding:
-  color: 'green'
-  icon: 'anchor'
+  color: green
+  icon: anchor
