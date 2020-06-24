@@ -87,20 +87,6 @@ echo "::group::Create Release"
 
 TMP="$(mktemp -d)"
 
-#
-## Create, or update release on Github
-#
-# For a given string return either bool, `null` (if empty), or `"quoted string"` (if not)
-toJsonOrNull() {
-  val="$(echo "$1" | tr '[:upper:]' '[:lower:]')"
-
-  case "$val" in
-    true|false) echo "$val"   ;;
-    "")         echo "null"   ;;
-    *)          echo "\"$1\"" ;;
-  esac
-}
-
 method="POST"
 full_url="$releases_url"
 if [ -n "$release_id" ]; then
@@ -117,16 +103,30 @@ if [ -z "$INPUT_DRAFT" ] && [ -n "$INPUT_FILES" ]; then
   draft=true
 fi
 
+quotes() { echo "$1" | sed 's|"|\\"|g'; }
+json_string() { [ -z "$1" ] && echo null || echo "\"$1\""; }
+json_bool() {
+	echo "$1" \
+		| tr '[:upper:]' '[:lower:]' \
+		| grep -iE '^(true|false|null)$' \
+	|| echo null
+}
+
+# Escape quotes for "name" & "body", and also escape newlines in "body".
+#   src: https://stackoverflow.com/a/1252191/390493
+body="$(quotes "$INPUT_BODY" | sed ':a;N;$!ba;s|\n|\\n|g')"
+name="$(quotes "$INPUT_NAME")"
+
 # Creating the object in a PATCH-friendly way
 #   If POST:  https://developer.github.com/v3/repos/releases/#create-a-release,
 #   If PATCH: https://developer.github.com/v3/repos/releases/#edit-a-release
 status_code="$(jq -nc \
   --arg tag_name              "$tag" \
-  --argjson draft             "$(toJsonOrNull "$draft")" \
-  --argjson target_commitish  "$(toJsonOrNull "$INPUT_COMMITISH")"  \
-  --argjson name              "$(toJsonOrNull "$INPUT_NAME")"       \
-  --argjson prerelease        "$(toJsonOrNull "$INPUT_PRERELEASE")" \
-  --argjson body              "$(toJsonOrNull "$(echo "$INPUT_BODY" | sed ':a;N;$!ba;s/\n/\\n/g')")" \
+  --argjson name              "$(json_string "$name")" \
+  --argjson body              "$(json_string "$body")" \
+  --argjson target_commitish  "$(json_string "$INPUT_COMMITISH")"  \
+  --argjson draft             "$(json_bool "$draft")" \
+  --argjson prerelease        "$(json_bool "$INPUT_PRERELEASE")" \
   '{$tag_name, $target_commitish, $name, $body, $draft, $prerelease} | del(.[] | nulls)' | \
   curl -sS  -X "$method"  -d @- \
   --write-out "%{http_code}" -o "$TMP/$method.json" \
