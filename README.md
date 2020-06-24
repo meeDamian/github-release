@@ -13,16 +13,8 @@
 [tippin_svg]: https://img.shields.io/badge/donate-lightning-FDD023?logo=bitcoin&style=flat
 [tippin_url]: https://tippin.me/@meeDamian
 
-Github Action to create and update Github Releases, as well as upload assets to them.
 
-
-> ### **NOTICE_2:** Deprecation <small>temporarily</small> cancelled, because GH actions are just awful.
->
-> ### ~~**NOTICE:** This action is now deprecated, and official actions should be used instead:~~
->
-> * ~~https://github.com/actions/create-release~~
-> * ~~https://github.com/actions/upload-release-asset~~
-
+The sane way of creating new and updating existing Github Releases with assets.
 
 # Usage
 
