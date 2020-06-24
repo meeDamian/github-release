@@ -39,11 +39,12 @@ steps:
 
 ### Arguments
 
-All inputs are available as a _normal_ Action input, but because Github Actions don't accept shell variables there, some are also available as an Environment Variable set beforehand.  When both set, one set as input takes precedence.
+All inputs are available as a _normal_ Action input (set as keys of `with:` map):
+
 
 | name             | required   | description
 |:----------------:|:----------:|----------------
-| `token`          | **always** | Github Access token.  Can be accessed by using `${{ secrets.GITHUB_TOKEN }}` in the workflow file.
+| `token`          | **always** | Github Access token. Can be accessed using `${{ secrets.GITHUB_TOKEN }}` in the workflow file.
 | `tag`            | sometimes  | If triggered by git tag push, tag is picked up automatically.  Otherwise `tag:` has to be set.
 | `commitish`      | no         | Commit hash this release should point to.  Unnecessary, if `tag` is a git tag.  Otherwise, current `master` is used. [more]
 | `name`           | no         | Name the release, the more creative, the better. Defaults to the name of the tag used. [more]
@@ -101,7 +102,7 @@ with:
   files: release-v1.0.0:release/
 ```
 
-As of Aug 2019, Github Actions doesn't support list arguments to actions, so to pass multiple files, pass them as a space-separated string.  To do that in an easier to read way, [YAML multiline syntax] can be used, example:
+As of Aug 2019, Github Actions doesn't support YAML-list arguments to actions, so multiple files need to be passed as a space-separated string.  [YAML multiline syntax] can be used to increase readability by having each file on a separate line, example:
 
 ```yaml
 with:
@@ -119,7 +120,7 @@ with:
 
 ```yaml
 steps:
-- uses: actions/checkout@master
+- uses: actions/checkout@v2
 
 - uses: meeDamian/github-release@2.0
   with:
@@ -144,7 +145,7 @@ steps:
 
 As of Aug 2019, Github Actions doesn't natively understand shortened tags in `uses:` directive.
 
-To go around that and not do what `git-tag-manual` calls _"[The insane thing]"_, I'm creating permanent git tags for each release in a semver format prefixed with `v`, **as well as** maintain branches with shortened tags.  You can see the exact process [here].
+To go around that and not do what `git-tag-manual` calls _"[The insane thing]"_, a permanent git tag, following `v`-prefixed, semver format is created, **as well as** git branches following latest minor versions.  See the process [here].
 
 Ex. `1.4` branch always points to the newest `v1.4.x` tag, etc.
 
@@ -153,7 +154,7 @@ In practice:
 ```yaml
 # For exact version
 steps:
-  uses: meeDamian/github-release@v2.0.0
+  uses: meeDamian/github-release@v2.0.2
 ```
 
 Or
