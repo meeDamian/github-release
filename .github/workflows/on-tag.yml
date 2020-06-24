@@ -20,7 +20,7 @@ jobs:
           git config user.name "$GITHUB_ACTOR"
           git config user.email "$GITHUB_ACTOR@users.noreply.github.com"
 
-          TAG="$(echo "$GITHUB_REF" | awk -F/ '{print $NF}')"
+          TAG="${GITHUB_REF#refs/tags/}"
           echo "::set-env name=TAG::$TAG"
           echo "::set-env name=SHORT::$(echo "${TAG#v}" | cut -d. -f-2)"
 
@@ -28,6 +28,6 @@ jobs:
         if: env.SHORT != '0.0'
         run: |
           git branch -f "$SHORT" "$TAG"
-
-          REMOTE="https://$GITHUB_ACTOR:${{ secrets.GITHUB_TOKEN }}@github.com/$GITHUB_REPOSITORY.git"
-          git push --force "$REMOTE" "$SHORT"
+          git push --force \
+            "https://$GITHUB_ACTOR:${{ secrets.GITHUB_TOKEN }}@github.com/$GITHUB_REPOSITORY.git"  \
+            "$SHORT"

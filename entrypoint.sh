@@ -4,143 +4,129 @@ set -e
 
 PKG="meeDamian/github-release@2.0"
 
+all_done() { >&2 echo "${1:+$1 }All Done."; exit 0; }
+panic() { (
+	[ -n "$3" ] && echo "::error::$2: $3 (see log for details)"
+	printf "\nERR: %s\n\n" "$1"
+	[ -n "$4" ] && jq . < "$4"
+) >&2; exit 1; }
+
+
 #
 ## Input verification
 #
 TOKEN="$INPUT_TOKEN"
-if [ -z "$TOKEN" ]; then
-  >&2 echo "::error::missing: token (see log for details)"
-  >&2 printf "\nERR: Invalid input: 'token' is required, and must be specified.\n"
-  >&2 printf "\tNote: It's necessary to interact with Github's API.\n\n"
-  >&2 printf "Try:\n"
-  >&2 printf "\tuses: %s\n" "$PKG"
-  >&2 printf "\twith:\n"
-  >&2 printf "\t  token: \${{ secrets.GITHUB_TOKEN }}\n"
-  >&2 printf "\t  ...\n\n"
-  exit 1
-fi
+[ -z "$TOKEN" ] && panic "Invalid input: 'token' is required, and must be specified.
+	Note: Needed to interact with Github's API.
 
-# Try getting $tag from action input
-tag="$INPUT_TAG"
+Try:
+	uses: $PKG
+	with:
+	  token: \${{ secrets.GITHUB_TOKEN }}
+	  ..." 'missing' 'token'
 
-# [fallback] Try getting $tag from Github context (only works on git-tag push action)
-if [ -z "$tag" ]; then
-  tag="$(echo "$GITHUB_REF" | grep 'refs/tags/' | awk -F/ '{ print $NF }')"
-fi
+# If $tag name not provided explicitly by user, fallback to extraction from `$GITHUB_REF`.
+tag="${INPUT_TAG:-${GITHUB_REF#refs/tags/}}"
 
-# If all ways of getting the $tag failed, exit with an error
-if [ -z "$tag" ]; then
-  >&2 echo "::error::missing: tag (see log for details)"
-  >&2 printf "\nERR: Invalid input: 'tag' is required, and must be specified.\n"
-  >&2 printf "Try:\n"
-  >&2 printf "\tuses: %s\n" "$PKG"
-  >&2 printf "\twith:\n"
-  >&2 printf "\t  tag: v0.0.1\n"
-  >&2 printf "\t  ...\n\n"
-  >&2 printf "Note: To use \$tag from env variable set before, use:\n"
-  >&2 printf '\twith:\n'
-  >&2 printf "\t  tag: \${{ env.TAG }}\n"
-  >&2 printf "\t  ...\n\n"
-  exit 1
-fi
+# Equality means $tag can't be determined from `$GITHUB_REF`, as Action was not run on git-tag push.
+[ "$tag" = "$GITHUB_REF" ] && panic "Invalid input: 'tag' is required, and must be specified.
+
+Try:
+	uses: $PKG
+	with:
+	  tag: v0.0.1           # to hardcode tag
+	  tag: \${{ env.TAG }}   # to use tag from env variable
+	  ..." 'missing' 'tag'
+
 
 # Verify that gzip: option is set to any of the allowed values
-if [ "$INPUT_GZIP" != "true" ] && [ "$INPUT_GZIP" != "false" ] && [ "$INPUT_GZIP" != "folders" ]; then
-  >&2 echo "::error::invalid: gzip (see log for details)"
-  >&2 printf "\nERR: Invalid input: 'gzip' can only be not set, or one of: true, false, folders\n"
-  >&2 printf "\tNote: It defines what to do with assets before uploading them.\n\n"
-  >&2 printf "Try:\n"
-  >&2 printf "\tuses: %s\n" "$PKG"
-  >&2 printf "\twith:\n"
-  >&2 printf "\t  gzip: true\n"
-  >&2 printf "\t  ...\n\n"
-  exit 1
-fi
+[ "$INPUT_GZIP" != "true" ] && \
+[ "$INPUT_GZIP" != "false" ] && \
+[ "$INPUT_GZIP" != "folders" ] && panic "Invalid input: 'gzip' if set, can be only: true, false, or folders
+	Note: It defines what to do with assets before upload.
+
+Try:
+	uses: $PKG
+	with:
+	  gzip: true
+	  ..." 'invalid' 'gzip'
+
 
 releases_url="https://api.github.com/repos/$GITHUB_REPOSITORY/releases"
-
 gh_release_api() {
-  url="$1"
-  method="${2:-GET}"
-  curl -sS  -H "Authorization: token $TOKEN"  -X "$method"  "$releases_url/$url"
+	url="$1"; method="${2:-GET}"
+	curl -sS  -H "Authorization: token $TOKEN"  -X "$method"  "$releases_url/$url"
 }
 
+
 #
-## Check for Github Release existence
-#
-# docs ref: https://developer.github.com/v3/repos/releases/#get-a-release-by-tag-name
+## Check Github Release existence for $tag
+#       docs: https://developer.github.com/v3/repos/releases/#get-a-release-by-tag-name
 release_id="$(gh_release_api "tags/$tag" | jq -r '.id | select(. != null)')"
 
-if [ -n "$release_id" ] && [ "$INPUT_ALLOW_OVERRIDE" != "true" ]; then
-  >&2 echo "::error::missing: allow_override (see log for details)"
-  >&2 printf "\nERR: Release for tag='%s' already exists, and overriding is not allowed.\n" "$tag"
-  >&2 printf "\tNote: Either use different 'tag:' name, or set 'allow_override:'\n\n"
-  >&2 printf "Try:\n"
-  >&2 printf "\tuses: %s\n" "$PKG"
-  >&2 printf "\twith:\n"
-  >&2 printf "\t  ...\n"
-  >&2 printf "\t  allow_override: true\n\n"
-  exit 1
-fi
+[ "$INPUT_ALLOW_OVERRIDE" != "true" ] && \
+[ -n "$release_id" ] && panic "Release for tag='$tag' already exists, and overriding is not allowed.
+	Note: Either use different 'tag:' name, or set 'allow_override:'.
 
+Try:
+	uses: $PKG
+	with:
+	  ...
+	  allow_override: true" 'missing' 'allow_override'
+
+
+#
+## Create or update Github Release
+#
 echo "::group::Create Release"
 
-TMP="$(mktemp -d)"
-
-#
-## Create, or update release on Github
-#
-# For a given string return either bool, `null` (if empty), or `"quoted string"` (if not)
+# For a given value return either: bool, `null` (if empty), or `"quoted string"` (in all other cases)
 toJsonOrNull() {
-  val="$(echo "$1" | tr '[:upper:]' '[:lower:]')"
+	val="$(echo "${1:-null}" | tr '[:upper:]' '[:lower:]')"
 
-  case "$val" in
-    true|false) echo "$val"   ;;
-    "")         echo "null"   ;;
-    *)          echo "\"$1\"" ;;
-  esac
+	case "$val" in
+		true|false|null) echo "$val"   ;;
+		*)               echo "\"$1\"" ;;
+	esac
 }
 
+full_url="$releases_url${release_id:+/$release_id}"
 method="POST"
-full_url="$releases_url"
-if [ -n "$release_id" ]; then
-  method="PATCH"
-  full_url="$full_url/$release_id"
-fi
+[ -n "$release_id" ] && \
+	method="PATCH"
 
-# If `draft` is not set, while `files` are provided, then
+# If `draft` is not set, while `files` is, then:
 #   1. Create Release as DRAFT
 #   2. Upload all files as Release Assets
 #   3. If all uploads succeed, publish the Release
 draft="$INPUT_DRAFT"
-if [ -z "$INPUT_DRAFT" ] && [ -n "$INPUT_FILES" ]; then
-  draft=true
-fi
+[ -z "$INPUT_DRAFT" ] && \
+[ -n "$INPUT_FILES" ] && \
+	draft=true
 
-# Creating the object in a PATCH-friendly way
-#   If POST:  https://developer.github.com/v3/repos/releases/#create-a-release,
-#   If PATCH: https://developer.github.com/v3/repos/releases/#edit-a-release
+TMP="$(mktemp -d)"
+
+# Create data-object in a PATCH-friendly way
+#   docs POST:  https://developer.github.com/v3/repos/releases/#create-a-release,
+#   docs PATCH: https://developer.github.com/v3/repos/releases/#edit-a-release
 status_code="$(jq -nc \
-  --arg tag_name              "$tag" \
-  --argjson draft             "$(toJsonOrNull "$draft")" \
-  --argjson target_commitish  "$(toJsonOrNull "$INPUT_COMMITISH")"  \
-  --argjson name              "$(toJsonOrNull "$INPUT_NAME")"       \
-  --argjson prerelease        "$(toJsonOrNull "$INPUT_PRERELEASE")" \
-  --argjson body              "$(toJsonOrNull "$(echo "$INPUT_BODY" | sed ':a;N;$!ba;s/\n/\\n/g')")" \
-  '{$tag_name, $target_commitish, $name, $body, $draft, $prerelease} | del(.[] | nulls)' | \
-  curl -sS  -X "$method"  -d @- \
-  --write-out "%{http_code}" -o "$TMP/$method.json" \
-  -H "Authorization: token $TOKEN" \
-  -H "Content-Type: application/json" \
-  "$full_url")"
+	--arg     tag_name          "$tag" \
+	--argjson draft             "$(toJsonOrNull "$draft")" \
+	--argjson target_commitish  "$(toJsonOrNull "$INPUT_COMMITISH")"  \
+	--argjson name              "$(toJsonOrNull "$INPUT_NAME")"       \
+	--argjson prerelease        "$(toJsonOrNull "$INPUT_PRERELEASE")" \
+	--argjson body              "$(toJsonOrNull "$(echo "$INPUT_BODY" | sed ':a;N;$!ba;s/\n/\\n/g')")" \
+	'{$tag_name, $target_commitish, $name, $body, $draft, $prerelease} | del(.[] | nulls)' | \
+	curl -sS  -X "$method"  -d @- \
+	--write-out "%{http_code}"  -o "$TMP/$method.json" \
+	-H "Authorization: token $TOKEN" \
+	-H "Content-Type: application/json" \
+	"$full_url")"
 
-if [ "$status_code" != "200" ] && [ "$status_code" != "201" ]; then
-  >&2 echo "::error::failed to create release (see log for details)"
-  >&2 printf "\n\tERR: %s to Github release has failed\n" "$method"
-  >&2 jq . < "$TMP/$method.json"
-  exit 1
-fi
-
+[ "$status_code" != "200" ] && \
+[ "$status_code" != "201" ] && panic "$method to Github release has failed with $status_code" \
+	'api' "fail on Release $method" \
+	"$TMP/$method.json"
 
 release_id="$(jq '.id' < "$TMP/$method.json")"
 
@@ -148,65 +134,48 @@ release_id="$(jq '.id' < "$TMP/$method.json")"
 echo "::set-output name=release_id::$release_id"
 echo "::endgroup::"
 
-#
-## Handle, and prepare assets
-#
 
-if [ -z "$INPUT_FILES" ]; then
-  >&2 echo "No assets to upload. All done."
-  exit 0
-fi
+#
+## Assets: handle & prepare
+#
+[ -z "$INPUT_FILES" ] && \
+	all_done 'No assets to upload.'
 
 echo "::group::Upload Assets"
 
 assets="$HOME/assets"
 mkdir -p "$assets/"
 
-
-# This loop splits files on space
 for entry in $INPUT_FILES; do
-  # Well, that needs explaining…  If delimiter given in `-d` does not occur in string, `cut` always returns
-  #   the original string, no matter what the field `-f` specifies.
-  #
-  # Prepend `:` to `$entry` to ensure match happens, because `-f` in `cut` is only respected when it does, and that way:
-  #   * `-f 2` always contains the name of the asset
-  #   * `-f 3` is either the custom name of the asset, or
-  #            is empty, and needs to be set to value of `-f 2`
-  asset_name="$(echo ":$entry" | cut -d: -f2)"
-  asset_path="$(echo ":$entry" | cut -d: -f3)"
+	asset_path="${entry#*:}"
+	asset_name="${entry%:*}"
+	[ "$asset_name" = "$entry" ] && \
+		asset_name="$(basename "$entry")"
 
-  if [ -z "$asset_path" ]; then
-    asset_name="$(basename "$entry")"
-    asset_path="$entry"
-  fi
+	# Loop on possible globs in paths
+	for file in $asset_path; do
+		[ "$INPUT_GZIP" = "false" ] && \
+		[ -d "$file" ] && panic "Invalid configuration: 'gzip' can't be 'false' when 'folders/' are provided.
+	Note: Either set 'gzip: folders', or remove directories from the 'files:' list.
 
-  # this loop, expands possible globs
-  for file in $asset_path; do
-    # Error out on the only illegal combination:  compression disabled AND folder provided
-    if [ "$INPUT_GZIP" = "false" ] && [ -d "$file" ]; then
-        >&2 echo "::error::invalid: gzip and files combination (see log for details)"
-        >&2 printf "\nERR: Invalid configuration: 'gzip' cannot be set to 'false' while there are 'folders/' provided.\n"
-        >&2 printf "\tNote: Either set 'gzip: folders', or remove directories from the 'files:' list.\n\n"
-        >&2 printf "Try:\n"
-        >&2 printf "\tuses: %s\n" "$PKG"
-        >&2 printf "\twith:\n"
-        >&2 printf "\t  ...\n"
-        >&2 printf "\t  gzip: folders\n"
-        >&2 printf "\t  files: >\n"
-        >&2 printf "\t    README.md\n"
-        >&2 printf "\t    my-artifacts/\n"
-        exit 1
-    fi
+Try:
+	uses: $PKG
+	with:
+	  ...
+	  gzip: folders
+	  files: >
+	    README.md
+	    my-artifacts/" 'invalid' 'gzip and folders combination'
 
-    # Just copy files, if compression not enabled for all
-    if [ "$INPUT_GZIP" != "true" ] && [ -f "$file" ]; then
-      cp "$file" "$assets/$asset_name"
-      continue
-    fi
+		# Don't compress files, if gzip not enabled for everything
+		if [ "$INPUT_GZIP" != "true" ] && [ -f "$file" ]; then
+			cp "$file" "$assets/$asset_name"
+			continue
+		fi
 
-    # In any other case compress
-    tar -czf "$assets/$asset_name.tgz"  "$file"
-  done
+		# In any other case compress
+		tar -czf "$assets/$asset_name.tgz"  "$file"
+	done
 done
 
 
@@ -215,72 +184,64 @@ echo "Files to be uploaded to Github:"
 ls "$assets/"
 
 
+# Overriding assets requires deleting them first, which in turn requires their ID.
+#   So, when override is enabled fetch all, and format into a name->id map.
+#       docs: https://developer.github.com/v3/repos/releases/#list-assets-for-a-release
 current_assets=
-
-# If override is allowed, make sure there's no asset name collisions with ones already uploaded
-if [ "$INPUT_ALLOW_OVERRIDE" = "true" ]; then
-  # Get list of all assets as a JSON map of: name->id
-  #   docs ref: https://developer.github.com/v3/repos/releases/#list-assets-for-a-release
-  current_assets="$(gh_release_api "$release_id/assets" | jq -r 'map({ (.name): .id }) | add')"
-fi
+[ "$INPUT_ALLOW_OVERRIDE" = "true" ] && \
+	current_assets="$(gh_release_api "$release_id/assets" | jq -r 'map({ (.name): .id }) | add')"
 
 
 upload_url="$(echo "$releases_url" | sed -e 's|api|uploads|')"
 
 for asset in "$assets"/*; do
-  file_name="$(basename "$asset")"
+	file_name="$(basename "$asset")"
 
-  # If a list of previously uploaded assets is available, and contains
-  #   item with the same name as currently uploaded, delete it first.
-  if [ -n "$current_assets" ]; then
-    asset_id="$(echo "$current_assets" | jq ".\"$file_name\"")"
-    if [ -n "$asset_id" ]; then
-      # docs ref: https://developer.github.com/v3/repos/releases/#delete-a-release-asset
-      gh_release_api "assets/$asset_id" DELETE
-    fi
-  fi
+	# Delete already existing asset, if collides with one to-be-uploaded.
+	if [ -n "$current_assets" ]; then
+		asset_id="$(echo "$current_assets" | jq ".\"$file_name\"")"
 
-  # docs ref: https://developer.github.com/v3/repos/releases/#upload-a-release-asset
-  status_code="$(curl -sS  -X POST \
-    --write-out "%{http_code}" -o "$TMP/$file_name.json" \
-    -H "Authorization: token $TOKEN" \
-    -H "Content-Length: $(stat -c %s "$asset")" \
-    -H "Content-Type: $(file -b --mime-type "$asset")" \
-    --upload-file "$asset" \
-    "$upload_url/$release_id/assets?name=$file_name")"
+		# docs: https://developer.github.com/v3/repos/releases/#delete-a-release-asset
+		[ -n "$asset_id" ] && \
+			gh_release_api "assets/$asset_id" DELETE
+	fi
 
-  if [ "$status_code" -ne "201" ]; then
-    >&2 echo "::error::failed to upload asset: $file_name (see log for details)"
-    >&2 printf "\n\tERR: Failed asset upload: %s\n" "$file_name"
-    >&2 jq . < "$TMP/$file_name.json"
-    exit 1
-  fi
+	# docs: https://developer.github.com/v3/repos/releases/#upload-a-release-asset
+	status_code="$(curl -sS  -X POST \
+		--write-out "%{http_code}"  -o "$TMP/$file_name.json" \
+		-H "Authorization: token $TOKEN" \
+		-H "Content-Length: $(stat -c %s "$asset")" \
+		-H "Content-Type: $(file -b --mime-type "$asset")" \
+		--upload-file "$asset" \
+		"$upload_url/$release_id/assets?name=$file_name")"
+
+	[ "$status_code" -ne "201" ] && panic "Failed asset upload: $file_name" \
+		'api' "failed to upload asset: $file_name" \
+		"$TMP/$file_name.json"
 done
 
 echo "::endgroup::"
 
-if [ -n "$INPUT_DRAFT" ]; then
-  >&2 echo "Draft status already correct. All done."
-  exit 0
-fi
+
+#
+## Finalize Release
+#
+[ -n "$INPUT_DRAFT" ] && \
+	all_done 'Draft status already correct.'
 
 echo "::group::Complete Release"
 
-# Publish Release
-#   docs ref: https://developer.github.com/v3/repos/releases/#edit-a-release
+# docs: https://developer.github.com/v3/repos/releases/#edit-a-release
 status_code="$(curl -sS  -X PATCH  -d '{"draft": false}' \
-  --write-out "%{http_code}" -o "$TMP/publish.json" \
+  --write-out "%{http_code}"  -o "$TMP/publish.json" \
   -H "Authorization: token $TOKEN" \
   -H "Content-Type: application/json" \
   "$releases_url/$release_id")"
 
-if [ "$status_code" != "200" ]; then
-  >&2 echo "::error::failed to complete release (see log for details)"
-  >&2 printf "\n\tERR: Final publishing of the ready Github Release has failed\n"
-  >&2 jq . < "$TMP/publish.json"
-  exit 1
-fi
+[ "$status_code" != "200" ] && panic "Final publishing of the ready Github Release has failed" \
+	'api' "failed to finalize release" \
+	"$TMP/publish.json"
 
 echo "::endgroup::"
 
->&2 echo "All done."
+all_done
