@@ -69,7 +69,7 @@ gh_release_api() {
 ## Check for Github Release existence
 #
 # docs ref: https://developer.github.com/v3/repos/releases/#get-a-release-by-tag-name
-release_id="$(gh_release_api "tags/$tag" | jq -r '.id | select(. != null)')"
+release_id="$(gh_release_api "tags/$tag" | jq -r '.id | values')"
 
 if [ -n "$release_id" ] && [ "$INPUT_ALLOW_OVERRIDE" != "true" ]; then
 	>&2 echo "::error::missing: allow_override (see log for details)"
