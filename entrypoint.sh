@@ -103,36 +103,22 @@ if [ -z "$INPUT_DRAFT" ] && [ -n "$INPUT_FILES" ]; then
   draft=true
 fi
 
-quotes() { echo "$1" | sed 's|"|\\"|g'; }
-json_string() { [ -z "$1" ] && echo null || echo "\"$1\""; }
-json_bool() {
-	echo "$1" \
-		| tr '[:upper:]' '[:lower:]' \
-		| grep -iE '^(true|false|null)$' \
-	|| echo null
-}
-
-# Escape quotes for "name" & "body", and also escape newlines in "body".
-#   src: https://stackoverflow.com/a/1252191/390493
-body="$(quotes "$INPUT_BODY" | sed ':a;N;$!ba;s|\n|\\n|g')"
-name="$(quotes "$INPUT_NAME")"
-
 # Creating the object in a PATCH-friendly way
 #   If POST:  https://developer.github.com/v3/repos/releases/#create-a-release,
 #   If PATCH: https://developer.github.com/v3/repos/releases/#edit-a-release
 status_code="$(jq -nc \
-  --arg tag_name              "$tag" \
-  --argjson name              "$(json_string "$name")" \
-  --argjson body              "$(json_string "$body")" \
-  --argjson target_commitish  "$(json_string "$INPUT_COMMITISH")"  \
-  --argjson draft             "$(json_bool "$draft")" \
-  --argjson prerelease        "$(json_bool "$INPUT_PRERELEASE")" \
-  '{$tag_name, $target_commitish, $name, $body, $draft, $prerelease} | del(.[] | nulls)' | \
-  curl -sS  -X "$method"  -d @- \
-  --write-out "%{http_code}" -o "$TMP/$method.json" \
-  -H "Authorization: token $TOKEN" \
-  -H "Content-Type: application/json" \
-  "$full_url")"
+  --arg tag_name         "$tag" \
+  --arg name             "$INPUT_NAME" \
+  --arg body             "$(printf '%s' "$INPUT_BODY" | sed 's|\\|\\\\|g')" \
+  --arg target_commitish "$INPUT_COMMITISH" \
+  --argjson draft        "${draft:-null}" \
+  --argjson prerelease   "${INPUT_PRERELEASE:-null}" \
+  '{$tag_name, $name, $body, $target_commitish, $draft, $prerelease} | del(.[] | select(. == null or . == ""))' | \
+  curl -sS -X "$method" -d @- \
+    --write-out "%{http_code}" -o "$TMP/$method.json" \
+    -H "Authorization: token $TOKEN" \
+    -H "Content-Type: application/json" \
+    "$full_url")"
 
 if [ "$status_code" != "200" ] && [ "$status_code" != "201" ]; then
   >&2 echo "::error::failed to create release (see log for details)"
