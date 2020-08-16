@@ -209,7 +209,9 @@ if [ "$INPUT_ALLOW_OVERRIDE" = "true" ]; then
 fi
 
 
+# Set output URL so matrices can upload an artifact later
 upload_url="$(echo "$releases_url" | sed -e 's|api|uploads|')"
+echo "::set-output name=upload_url::$upload_url"
 
 for asset in "$assets"/*; do
 	file_name="$(basename "$asset")"
