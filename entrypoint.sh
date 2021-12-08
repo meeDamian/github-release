@@ -224,21 +224,39 @@ for asset in "$assets"/*; do
 		fi
 	fi
 
-	# docs ref: https://developer.github.com/v3/repos/releases/#upload-a-release-asset
-	status_code="$(curl -sS  -X POST \
-		--write-out "%{http_code}" -o "$TMP/$file_name.json" \
-		-H "Authorization: token $TOKEN" \
-		-H "Content-Length: $(stat -c %s "$asset")" \
-		-H "Content-Type: $(file -b --mime-type "$asset")" \
-		--upload-file "$asset" \
-		"$upload_url/$release_id/assets?name=$file_name")"
+	connreset_retry=5
+	while true; do
+		# Don't exit if curl returns a non-zero exit code
+		set +e
 
-	if [ "$status_code" -ne "201" ]; then
-		>&2 echo "::error::failed to upload asset: $file_name (see log for details)"
-		>&2 printf "\n\tERR: Failed asset upload: %s\n" "$file_name"
-		>&2 jq . < "$TMP/$file_name.json"
-		exit 1
-	fi
+		# docs ref: https://developer.github.com/v3/repos/releases/#upload-a-release-asset
+		status_code="$(curl -sS  -X POST \
+			--write-out "%{http_code}" -o "$TMP/$file_name.json" \
+			-H "Authorization: token $TOKEN" \
+			-H "Content-Length: $(stat -c %s "$asset")" \
+			-H "Content-Type: $(file -b --mime-type "$asset")" \
+			--upload-file "$asset" \
+			"$upload_url/$release_id/assets?name=$file_name")"
+
+		exit_code=$?
+		set -e
+
+		if [ \( "$exit_code" -eq "55" -o "$exit_code" -eq "56" \) -a "$connreset_retry" -gt "0" ]; then
+			>&2 echo "failed to upload asset: $file_name (send/recv error; $((connreset_retry-=1)) retries remain)"
+			sleep 5
+			asset_id="$(gh_release_api "$release_id/assets" | jq -r "map(select(.name == \"$file_name\")) | .[] | .id")"
+			gh_release_api "assets/$asset_id" DELETE
+			continue
+		fi
+
+		if [ "$exit_code" -ne "0" -o "$status_code" -ne "201" ]; then
+			>&2 echo "::error::failed to upload asset: $file_name (see log for details)"
+			>&2 printf "\n\tERR: Failed asset upload: %s\n" "$file_name"
+			>&2 jq . < "$TMP/$file_name.json"
+			exit 1
+		fi
+		break
+	done
 done
 
 echo "::endgroup::"
