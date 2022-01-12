@@ -42,18 +42,19 @@ steps:
 All inputs are available as a _normal_ Action input (set as keys of `with:` map):
 
 
-| name             | required   | description
-|:----------------:|:----------:|----------------
-| `token`          | **always** | Github Access token. Can be accessed using `${{ secrets.GITHUB_TOKEN }}` in the workflow file.
-| `tag`            | sometimes  | If triggered by git tag push, tag is picked up automatically.  Otherwise `tag:` has to be set.
-| `commitish`      | no         | Commit hash this release should point to.  Unnecessary, if `tag` is a git tag.  Otherwise, current `master` is used. [more]
-| `name`           | no         | Name the release, the more creative, the better. Defaults to the name of the tag used. [more]
-| `body`           | no         | Longer description of the release, ex changelog, or info about contributors.  Defaults to the commit message of the reference commit. [more]
-| `draft`          | no         | Set to `true` to create a release, but not publish it. `false` by default. [more]
-| `prerelease`     | no         | Mark this release as a pre-release. `false` by default. [more]
-| `files`          | no         | A **space-separated** list of files to be uploaded. When left empty, no files are uploaded. [More on files below]
-| `gzip`           | no         | Set whether to `gzip` uploaded assets, or not.  Available options are: `true`, `false`, and `folders` which uploads files unchanged, but compresses directories/folders.  Defaults to `true`.  Note: it errors if set to `false`, and `files:` argument contains path to a directory.
-| `allow_override` | no         | Allow override of release, if one with the same tag already exists.  Defaults to `false`
+|           name           | required   | description
+|:------------------------:|:----------:|----------------
+|         `token`          | **always** | Github Access token. Can be accessed using `${{ secrets.GITHUB_TOKEN }}` in the workflow file.
+|          `tag`           | sometimes  | If triggered by git tag push, tag is picked up automatically.  Otherwise `tag:` has to be set.
+|       `commitish`        | no         | Commit hash this release should point to.  Unnecessary, if `tag` is a git tag.  Otherwise, current `master` is used. [more]
+|          `name`          | no         | Name the release, the more creative, the better. Defaults to the name of the tag used. [more]
+|          `body`          | no         | Longer description of the release, ex changelog, or info about contributors.  Defaults to the commit message of the reference commit. [more]
+|         `draft`          | no         | Set to `true` to create a release, but not publish it. `false` by default. [more]
+|       `prerelease`       | no         | Mark this release as a pre-release. `false` by default. [more]
+|         `files`          | no         | A **space-separated** list of files to be uploaded. When left empty, no files are uploaded. [More on files below]
+|          `gzip`          | no         | Set whether to `gzip` uploaded assets, or not.  Available options are: `true`, `false`, and `folders` which uploads files unchanged, but compresses directories/folders.  Defaults to `true`.  Note: it errors if set to `false`, and `files:` argument contains path to a directory.
+|   `allow_override`       | no         | Allow override of release, if one with the same tag already exists.  Defaults to `false`
+| `generate_release_notes` | no         | Whether to automatically generate the name and body for this release. If name is specified, the specified name will be used; otherwise, a name will be automatically generated. If body is specified, the body will be pre-pended to the automatically generated notes.  Defaults to `false` 
 
 [more]: https://developer.github.com/v3/repos/releases/#create-a-release
 [More on files below]: #Files-syntax
