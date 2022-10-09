@@ -1,4 +1,4 @@
-name: Github Release create, update, and upload assets
+name: Create GitHub Release
 description: Github Action to create, update, or add files to Github Releases
 author: 'Ryan Kubiak <ryan@kubiq.io>'
 
