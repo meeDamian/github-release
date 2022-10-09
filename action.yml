@@ -1,4 +1,4 @@
-name: Create GitHub Release
+name: Create a GitHub Release
 description: Github Action to create, update, or add files to Github Releases
 author: 'Ryan Kubiak <ryan@kubiq.io>'
 
