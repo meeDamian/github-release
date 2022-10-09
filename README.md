@@ -1,18 +1,9 @@
-# meeDamian/github-release
+# iamkubi/github-release
 
-[![branches_gh_action_svg]][branches_gh_action_url]
 [![gh_last_release_svg]][gh_last_release_url]
-[![tippin_svg]][tippin_url]
 
-[branches_gh_action_svg]: https://github.com/meeDamian/github-release/workflows/Create%20shortened%20tags/badge.svg
-[branches_gh_action_url]: https://github.com/meeDamian/github-release/blob/master/.github/workflows/on-tag.yml
-
-[gh_last_release_svg]: https://img.shields.io/github/v/release/meeDamian/github-release?sort=semver
-[gh_last_release_url]: https://github.com/meeDamian/github-release/releases/latest
-
-[tippin_svg]: https://img.shields.io/badge/donate-lightning-FDD023?logo=bitcoin&style=flat
-[tippin_url]: https://tippin.me/@meeDamian
-
+[gh_last_release_svg]: https://img.shields.io/github/v/release/iamkubi/github-release?sort=semver
+[gh_last_release_url]: https://github.com/iamkubi/github-release/releases/latest
 
 The sane way of creating new and updating existing Github Releases with assets.
 
@@ -27,7 +18,7 @@ See [action.yml](action.yml)
 steps:
 - uses: actions/checkout@v2
 
-- uses: meeDamian/github-release@2.0
+- uses: iamkubi/github-release@2.0
   with:
     token: ${{ secrets.GITHUB_TOKEN }}
 ```
@@ -42,18 +33,19 @@ steps:
 All inputs are available as a _normal_ Action input (set as keys of `with:` map):
 
 
-| name             | required   | description
-|:----------------:|:----------:|----------------
-| `token`          | **always** | Github Access token. Can be accessed using `${{ secrets.GITHUB_TOKEN }}` in the workflow file.
-| `tag`            | sometimes  | If triggered by git tag push, tag is picked up automatically.  Otherwise `tag:` has to be set.
-| `commitish`      | no         | Commit hash this release should point to.  Unnecessary, if `tag` is a git tag.  Otherwise, current `master` is used. [more]
-| `name`           | no         | Name the release, the more creative, the better. Defaults to the name of the tag used. [more]
-| `body`           | no         | Longer description of the release, ex changelog, or info about contributors.  Defaults to the commit message of the reference commit. [more]
-| `draft`          | no         | Set to `true` to create a release, but not publish it. `false` by default. [more]
-| `prerelease`     | no         | Mark this release as a pre-release. `false` by default. [more]
-| `files`          | no         | A **space-separated** list of files to be uploaded. When left empty, no files are uploaded. [More on files below]
-| `gzip`           | no         | Set whether to `gzip` uploaded assets, or not.  Available options are: `true`, `false`, and `folders` which uploads files unchanged, but compresses directories/folders.  Defaults to `true`.  Note: it errors if set to `false`, and `files:` argument contains path to a directory.
-| `allow_override` | no         | Allow override of release, if one with the same tag already exists.  Defaults to `false`
+|           name           | required   | description
+|:------------------------:|:----------:|----------------
+|         `token`          | **always** | Github Access token. Can be accessed using `${{ secrets.GITHUB_TOKEN }}` in the workflow file.
+|          `tag`           | sometimes  | If triggered by git tag push, tag is picked up automatically.  Otherwise `tag:` has to be set.
+|       `commitish`        | no         | Commit hash this release should point to.  Unnecessary, if `tag` is a git tag.  Otherwise, current `master` is used. [more]
+|          `name`          | no         | Name the release, the more creative, the better. Defaults to the name of the tag used. [more]
+|          `body`          | no         | Longer description of the release, ex changelog, or info about contributors.  Defaults to the commit message of the reference commit. [more]
+|         `draft`          | no         | Set to `true` to create a release, but not publish it. `false` by default. [more]
+|       `prerelease`       | no         | Mark this release as a pre-release. `false` by default. [more]
+|         `files`          | no         | A **space-separated** list of files to be uploaded. When left empty, no files are uploaded. [More on files below]
+|          `gzip`          | no         | Set whether to `gzip` uploaded assets, or not.  Available options are: `true`, `false`, and `folders` which uploads files unchanged, but compresses directories/folders.  Defaults to `true`.  Note: it errors if set to `false`, and `files:` argument contains path to a directory.
+|   `allow_override`       | no         | Allow override of release, if one with the same tag already exists.  Defaults to `false`
+| `generate_release_notes` | no         | Whether to automatically generate the name and body for this release. If name is specified, the specified name will be used; otherwise, a name will be automatically generated. If body is specified, the body will be pre-pended to the automatically generated notes.  Defaults to `false` 
 
 [more]: https://developer.github.com/v3/repos/releases/#create-a-release
 [More on files below]: #Files-syntax
@@ -71,7 +63,7 @@ steps:
         echo ::set-env name=RELEASE_TAG::"v1.0.0"
         echo ::set-env name=RELEASE_NAME::"$GITHUB_WORKFLOW"
 
-    - uses: meeDamian/github-release@2.0
+    - uses: iamkubi/github-release@2.0
       with:
         token: ${{ secrets.GITHUB_TOKEN }}
         tag: ${{ env.RELEASE_TAG }}
@@ -122,7 +114,7 @@ with:
 steps:
 - uses: actions/checkout@v2
 
-- uses: meeDamian/github-release@2.0
+- uses: iamkubi/github-release@2.0
   with:
     token: ${{ secrets.GITHUB_TOKEN }}
     tag: ${{ env.MY_CUSTOM_TAG }}
@@ -154,7 +146,7 @@ In practice:
 ```yaml
 # For exact version
 steps:
-  uses: meeDamian/github-release@v2.0.2
+  uses: iamkubi/github-release@v2.0.2
 ```
 
 Or
@@ -162,7 +154,7 @@ Or
 ```yaml
 # For newest minor version 2.0
 steps:
-  uses: meeDamian/github-release@2.0
+  uses: iamkubi/github-release@2.0
 ```
 
 Note: It's likely branches will be deprecated once Github Actions fixes its limitation.

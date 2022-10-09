@@ -1,9 +1,9 @@
-name: Github Release create, update, and upload assets
+name: Create a GitHub Release
 description: Github Action to create, update, or add files to Github Releases
-author: 'Damian Mee <spam@meedamian.com>'
+author: 'Ryan Kubiak <ryan@kubiq.io>'
 
 inputs:
-  # Exposed Github API inputs (identical to ones consumed by Github API):
+  # Exposed GitHub API inputs (identical to ones consumed by Github API):
   #   https://developer.github.com/v3/repos/releases/#create-a-release
   # NOTE: No defaults set for these, to avoid override on update due to the impossibility
   #       of distinguishing between default and user input.
@@ -36,6 +36,13 @@ inputs:
 
   prerelease:
     description: Marks Release as a pre-Release.
+    required: false
+
+  generate_release_notes:
+    description: >
+      Whether to automatically generate the name and body for this release. If name is specified, the specified name
+      will be used; otherwise, a name will be automatically generated. If body is specified, the body will be pre-pended
+      to the automatically generated notes.
     required: false
 
   # Inputs specific to this-action:

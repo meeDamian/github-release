@@ -1,6 +1,6 @@
 #!/bin/sh -le
 
-PKG="meeDamian/github-release@2.0"
+PKG="iamkubi/github-release@2.0"
 
 #
 ## Input verification
@@ -105,13 +105,14 @@ fi
 #   If POST:  https://developer.github.com/v3/repos/releases/#create-a-release,
 #   If PATCH: https://developer.github.com/v3/repos/releases/#edit-a-release
 status_code="$(jq -nc \
-	--arg tag_name         "$tag" \
-	--arg name             "$INPUT_NAME" \
-	--arg body             "$(printf '%s' "$INPUT_BODY" | sed 's|\\|\\\\|g')" \
-	--arg target_commitish "$INPUT_COMMITISH" \
-	--argjson draft        "${draft:-null}" \
-	--argjson prerelease   "${INPUT_PRERELEASE:-null}" \
-	'{$tag_name, $name, $body, $target_commitish, $draft, $prerelease} | del(.[] | select(. == null or . == ""))' | \
+	--arg tag_name                    "$tag" \
+	--arg name                        "$INPUT_NAME" \
+	--arg body                        "$(printf '%s' "$INPUT_BODY" | sed 's|\\|\\\\|g')" \
+	--arg target_commitish            "$INPUT_COMMITISH" \
+	--argjson draft                   "${draft:-null}" \
+	--argjson prerelease              "${INPUT_PRERELEASE:-null}" \
+	--argjson generate_release_notes  "${INPUT_GENERATE_RELEASE_NOTES:-null}" \
+	'{$tag_name, $name, $body, $target_commitish, $draft, $prerelease, $generate_release_notes} | del(.[] | select(. == null or . == ""))' | \
 	curl -sS -X "$method" -d @- \
 		--write-out "%{http_code}" -o "$TMP/$method.json" \
 		-H "Authorization: token $TOKEN" \
