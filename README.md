@@ -63,7 +63,7 @@ steps:
         echo ::set-env name=RELEASE_TAG::"v1.0.0"
         echo ::set-env name=RELEASE_NAME::"$GITHUB_WORKFLOW"
 
-    - uses: meeDamian/github-release@2.0
+    - uses: iamkubi/github-release@2.0
       with:
         token: ${{ secrets.GITHUB_TOKEN }}
         tag: ${{ env.RELEASE_TAG }}
