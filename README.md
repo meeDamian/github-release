@@ -1,18 +1,9 @@
-# meeDamian/github-release
+# iamkubi/github-release
 
-[![branches_gh_action_svg]][branches_gh_action_url]
 [![gh_last_release_svg]][gh_last_release_url]
-[![tippin_svg]][tippin_url]
 
-[branches_gh_action_svg]: https://github.com/meeDamian/github-release/workflows/Create%20shortened%20tags/badge.svg
-[branches_gh_action_url]: https://github.com/meeDamian/github-release/blob/master/.github/workflows/on-tag.yml
-
-[gh_last_release_svg]: https://img.shields.io/github/v/release/meeDamian/github-release?sort=semver
-[gh_last_release_url]: https://github.com/meeDamian/github-release/releases/latest
-
-[tippin_svg]: https://img.shields.io/badge/donate-lightning-FDD023?logo=bitcoin&style=flat
-[tippin_url]: https://tippin.me/@meeDamian
-
+[gh_last_release_svg]: https://img.shields.io/github/v/release/iamkubi/github-release?sort=semver
+[gh_last_release_url]: https://github.com/iamkubi/github-release/releases/latest
 
 The sane way of creating new and updating existing Github Releases with assets.
 
@@ -27,7 +18,7 @@ See [action.yml](action.yml)
 steps:
 - uses: actions/checkout@v2
 
-- uses: meeDamian/github-release@2.0
+- uses: iamkubi/github-release@2.0
   with:
     token: ${{ secrets.GITHUB_TOKEN }}
 ```
@@ -123,7 +114,7 @@ with:
 steps:
 - uses: actions/checkout@v2
 
-- uses: meeDamian/github-release@2.0
+- uses: iamkubi/github-release@2.0
   with:
     token: ${{ secrets.GITHUB_TOKEN }}
     tag: ${{ env.MY_CUSTOM_TAG }}
@@ -155,7 +146,7 @@ In practice:
 ```yaml
 # For exact version
 steps:
-  uses: meeDamian/github-release@v2.0.2
+  uses: iamkubi/github-release@v2.0.2
 ```
 
 Or
@@ -163,7 +154,7 @@ Or
 ```yaml
 # For newest minor version 2.0
 steps:
-  uses: meeDamian/github-release@2.0
+  uses: iamkubi/github-release@2.0
 ```
 
 Note: It's likely branches will be deprecated once Github Actions fixes its limitation.
