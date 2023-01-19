@@ -20,14 +20,12 @@ jobs:
           git config user.name "$GITHUB_ACTOR"
           git config user.email "$GITHUB_ACTOR@users.noreply.github.com"
 
-          echo "::set-env name=TAG::${GITHUB_REF#refs/tags/}"
-
       - name: Create, or update the short-name branch
-        if: startsWith(env.TAG, 'v0.0') != true
+        if: startsWith(github.ref_name, 'v0.0') != true
         run: |
-          SHORT="$(echo "${TAG#v}" | cut -d. -f-2)"
+          SHORT="$(echo "${GITHUB_REF_NAME#v}" | cut -d. -f-2)"
 
-          git branch -f "$SHORT" "$TAG"
+          git branch -f "$SHORT" "$GITHUB_REF_NAME"
 
           git push --force \
             "https://$GITHUB_ACTOR:${{ secrets.GITHUB_TOKEN }}@github.com/$GITHUB_REPOSITORY.git" \
