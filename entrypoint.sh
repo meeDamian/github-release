@@ -129,7 +129,7 @@ fi
 release_id="$(jq '.id' < "$TMP/$method.json")"
 
 # Make release ID available to other steps in user's workflow
-echo "::set-output name=release_id::$release_id"
+echo "release_id=$release_id" >> $GITHUB_OUTPUT
 echo "::endgroup::"
 
 #

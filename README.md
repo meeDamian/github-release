@@ -68,8 +68,8 @@ steps:
     ...
     - name: Set enviroment for github-release
       run: |
-        echo ::set-env name=RELEASE_TAG::"v1.0.0"
-        echo ::set-env name=RELEASE_NAME::"$GITHUB_WORKFLOW"
+        echo "RELEASE_TAG=v1.0.0" >> $GITHUB_ENV
+        echo "RELEASE_NAME=$GITHUB_WORKFLOW" >> $GITHUB_ENV
 
     - uses: meeDamian/github-release@2.0
       with:
@@ -79,9 +79,9 @@ steps:
     ...
 ```
 
-To learn more about notation used above see [this].
+To learn more about the use of `GITHUB_ENV` above see [this].
 
-[this]: https://help.github.com/en/articles/development-tools-for-github-actions#set-an-environment-variable-set-env
+[this]: https://docs.github.com/en/actions/using-workflows/workflow-commands-for-github-actions#setting-an-environment-variable
 
 
 #### Files syntax
