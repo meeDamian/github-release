@@ -147,8 +147,9 @@ assets="$HOME/assets"
 mkdir -p "$assets/"
 
 
-# This loop splits files on space
-for entry in $INPUT_FILES; do
+# This loop splits files on newlines
+IFS='
+' && for entry in $INPUT_FILES; do
 	# Well, that needs explaining…  If delimiter given in `-d` does not occur in string, `cut` always returns
 	#   the original string, no matter what the field `-f` specifies.
 	#
